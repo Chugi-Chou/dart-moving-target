@@ -177,7 +177,7 @@ extern "C" {
         HAL_UARTEx_ReceiveToIdle_DMA(&huart3, uart_rx_buf, sizeof(uart_rx_buf));
 
         new_motor.SetTarget(SPEED_MODE, 0);
-        new_motor.SetDirection(CLOCKWISE);
+        new_motor.SetDirection(EITHERDIRECTION);
     }
 
     void new_App_Task_1ms(void) {

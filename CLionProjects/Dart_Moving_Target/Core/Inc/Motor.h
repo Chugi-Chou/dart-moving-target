@@ -9,7 +9,7 @@
 #include "main.h"
 
 enum ControlMode_e { CURRENT_MODE, SPEED_MODE, POSITION_MODE };
-enum MotorDirection_e {CLOCKWISE, COUNTERCLOCKWISE};
+enum MotorDirection_e {CLOCKWISE, COUNTERCLOCKWISE, EITHERDIRECTION};
 enum MotorType {M2006, M3508};
 
 class Motor{
@@ -20,7 +20,7 @@ public:
     int16_t ExecuteControl();
     float GetCurrentAngle() const { return total_angle; }
     bool IsTargetReached(float threshold = 1.0f);
-    void ToggleDirction();
+    void ToggleDirection();
     void SetDirection(MotorDirection_e direction);
 
 private:

@@ -88,9 +88,10 @@ bool Motor::IsTargetReached(float const threshold) {
     return (error < threshold);
 }
 
-void Motor::ToggleDirction() {
+void Motor::ToggleDirection() {
     if (dir == CLOCKWISE) dir = COUNTERCLOCKWISE;
-    else dir = CLOCKWISE;
+    else if (dir == COUNTERCLOCKWISE) dir = CLOCKWISE;
+    else dir = EITHERDIRECTION;
 }
 
 void Motor::SetDirection(MotorDirection_e direction) {
