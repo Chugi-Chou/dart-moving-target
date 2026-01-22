@@ -1,13 +1,13 @@
 dart_moving_target/wfly_et_08_remote_control.o: \
   ..\Core\Src\WFly_ET_08_remote_control.cpp \
   ..\Core\Inc\WFly_ET_08_remote_control.h \
-  D:\Keil_v5\ARM\ARMCLANG\Bin\..\include\libcxx\cstdint \
-  D:\Keil_v5\ARM\ARMCLANG\Bin\..\include\libcxx\__assert \
-  D:\Keil_v5\ARM\ARMCLANG\Bin\..\include\libcxx\__config \
-  D:\Keil_v5\ARM\ARMCLANG\Bin\..\include\libcxx\__verbose_abort \
-  D:\Keil_v5\ARM\ARMCLANG\Bin\..\include\libcxx\__availability \
-  D:\Keil_v5\ARM\ARMCLANG\Bin\..\include\libcxx\stdint.h \
-  D:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdint.h \
+  D:\program\ files\MDK\ARM\ARMCLANG\Bin\..\include\libcxx\cstdint \
+  D:\program\ files\MDK\ARM\ARMCLANG\Bin\..\include\libcxx\__assert \
+  D:\program\ files\MDK\ARM\ARMCLANG\Bin\..\include\libcxx\__config \
+  D:\program\ files\MDK\ARM\ARMCLANG\Bin\..\include\libcxx\__verbose_abort \
+  D:\program\ files\MDK\ARM\ARMCLANG\Bin\..\include\libcxx\__availability \
+  D:\program\ files\MDK\ARM\ARMCLANG\Bin\..\include\libcxx\stdint.h \
+  D:\program\ files\MDK\ARM\ARMCLANG\Bin\..\include\stdint.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal.h \
   ..\Core\Inc\stm32f4xx_hal_conf.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_rcc.h \
@@ -21,8 +21,8 @@ dart_moving_target/wfly_et_08_remote_control.o: \
   ..\Drivers\CMSIS\Include\mpu_armv7.h \
   ..\Drivers\CMSIS\Device\ST\STM32F4xx\Include\system_stm32f4xx.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\Legacy\stm32_hal_legacy.h \
-  D:\Keil_v5\ARM\ARMCLANG\Bin\..\include\libcxx\stddef.h \
-  D:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stddef.h \
+  D:\program\ files\MDK\ARM\ARMCLANG\Bin\..\include\libcxx\stddef.h \
+  D:\program\ files\MDK\ARM\ARMCLANG\Bin\..\include\stddef.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_rcc_ex.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_gpio.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_gpio_ex.h \

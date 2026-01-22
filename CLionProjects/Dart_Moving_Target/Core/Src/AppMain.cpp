@@ -2,6 +2,8 @@
 // Created by zhouzhi on 2026/1/20.
 //
 
+#include <cstdlib>
+#include <random>
 #include "../Inc/AppMain.h"
 
 #include "AppMain.h"
@@ -10,8 +12,8 @@
 #include "usart.h"
 #include "WFly_ET_08_remote_control.h"
 
-PID s_pid_task(1.5f, 0.05f, 0.0f, 0.0f, 10000.0f, 8000.0f, 0.7f);
-PID p_pid_task(5.0f, 0.05f, 0.0f, 0.0f, 10000.0f, 0.0f, 0.0f); // 加上 Kd
+PID s_pid_task(3.0f, 0.0035f, 0.1f, 0.0f, 6000.0f, 1800.0f, 0.7f);
+PID p_pid_task(1.0f, 0.0f, 0.1f, 0.0f, 3000.0f, 1000.0f, 0.0f); // 加上 Kd
 
 PID s_pid_always(1.5f, 0.005f, 0.0f, 0.0f, 15000.0f, 10000.0f, 0.5f);
 PID p_pid_always(1.0f, 0.0f, 0.0f, 0.0f, 10000.0f, 0.0f, 0.0f);
@@ -19,7 +21,7 @@ PID p_pid_always(1.0f, 0.0f, 0.0f, 0.0f, 10000.0f, 0.0f, 0.0f);
 Motor motor_task(p_pid_task, s_pid_task, M2006, SPEED_MODE);
 Motor motor_always(p_pid_always, s_pid_always, M2006, SPEED_MODE);
 
-Motor new_motor(p_pid_task, p_pid_task, M3508, SPEED_MODE);
+Motor new_motor(p_pid_task, s_pid_task, M3508, SPEED_MODE);
 et_08 rm_controller;
 
 uint8_t d[8] = {0, 0, 0, 0, 0, 0, 0, 0}; //tx_data
@@ -27,6 +29,8 @@ uint8_t uart_rx_buf[36];
 uint8_t uart_rx_data[18];
 
 float target_speed_debug = 1600.0f;
+bool ismoving = false;
+int16_t current_m3 = 0;
 
 struct CAN_Debug_t {
     uint32_t id;
@@ -141,7 +145,24 @@ extern "C" {
 
     void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         if (htim->Instance == TIM6) {
-            new_App_Task_1ms();
+            //new_App_Task_1ms();
+            if (rm_controller.getsc() == 2 || ismoving && new_motor.IsPositionReached()) {
+                CAN_Send(0,0,0);
+            } else {
+                if (!ismoving && rm_controller.getsc() == 0 && rm_controller.getsa() == 2 &&
+                    rm_controller.getsb() == 0 && rm_controller.getsd() == 2) {
+                    if (!new_motor.init_ready) {
+                        new_motor.init();
+                        current_m3 = new_motor.ExecuteControl();
+                        current_m3 = 65535 - current_m3;
+                        CAN_Send(0, 0, current_m3);
+                    } else set_random_position();
+                }
+                if (ismoving && !new_motor.IsPositionReached()) {
+                    move_random_position();
+                }
+            }
+            if (rm_controller.getsc() != 0 || rm_controller.getsa() != 2 || rm_controller.getsb() != 0 || rm_controller.getsd() != 2) ismoving = false;
         }
     }
 
@@ -181,6 +202,11 @@ extern "C" {
     }
 
     void new_App_Task_1ms(void) {
+        if(rm_controller.getsc() == 2) {
+            CAN_Send(0, 0, 0);
+            return;
+        }
+
         float joystick_val = rm_controller.getLeftHori();
 
         // 映射到 3508 电机的转速 (M3508 最大转速约 9000rpm，这里设定最大输出 5000 比较安全)
@@ -192,15 +218,28 @@ extern "C" {
         // 执行 PID 并获取电流值
         int16_t current_m1 = motor_task.ExecuteControl();
         int16_t current_m2 = motor_always.ExecuteControl();
-        int16_t current_m3 = new_motor.ExecuteControl();
+        current_m3 = new_motor.ExecuteControl();
 
         // 发送给 CAN 总线
         CAN_Send(current_m1, current_m2, current_m3);
     }
 
+    void set_random_position() {
+        uint32_t tick = HAL_GetTick();
+        int16_t random_pos = tick % 100;
+        new_motor.SetPosition(random_pos);
+        ismoving = true;
+    }
+
+    void move_random_position() {
+        current_m3 = new_motor.ExecuteControl();
+        CAN_Send(0, 0, current_m3);
+        new_motor.init_ready = false;
+    }
+
     void new_App_CAN_Callback(uint32_t std_id, uint8_t* data) {
         if (std_id == 0x203) {
-            new_motor.UpdateFeedback(data);
+            new_motor.Update(data);
         }
     }
 

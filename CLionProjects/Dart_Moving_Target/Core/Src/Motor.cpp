@@ -4,12 +4,14 @@
 
 #include "../Inc/Motor.h"
 
+#include <cmath>
 #include "PID.h"
 #include "main.h"
 
 Motor::Motor(const PID& pos_pid, const PID& speed_pid, MotorType motor_selection, ControlMode_e ctrl_selection)
     : pos_controller(pos_pid), speed_controller(speed_pid), motor_type(motor_selection), ctrl_mode(ctrl_selection),
-      target_value(0), initialized(false) {
+      target_value(0), initialized(false), init_ready(false), total_x(0.0f), total_angle(0.0f), last_total_x(0.0f),
+      stuck_time(0), init_speed(1000.0f), stuck_current(5015), max_stuck_time(10) {
     dir = CLOCKWISE;
     switch (motor_type) {
         case M2006: reduction_ratio = 36.0f; break;
@@ -17,10 +19,32 @@ Motor::Motor(const PID& pos_pid, const PID& speed_pid, MotorType motor_selection
     }
 }
 
-void Motor::UpdateFeedback(uint8_t data[8]) {
+void Motor::init() {
+
+    if (std::fabs(current) > stuck_current && std::fabs(total_x - last_total_x) < 0.005) {
+        stuck_time++;
+    } else {
+        stuck_time = 0;
+    }
+
+    if (stuck_time < max_stuck_time) {
+        SetTarget(SPEED_MODE, init_speed);
+        last_total_x = total_x;
+    } else {
+        SetTarget(SPEED_MODE, 0.0f);
+        total_angle = 0;
+        total_x = 0;
+        last_total_x = 0;
+        target_position = 0;
+        init_ready = true;
+        stuck_time = 0;
+    }
+}
+
+
+void Motor::UpdateFeedback(const uint8_t data[8]) {
     int16_t raw_angle = (data[0] << 8) | data[1];
     current_speed = (float)((int16_t)((data[2] << 8) | data[3]));
-
     if (!initialized) {
         last_raw_angle = raw_angle;
         initialized = true;
@@ -30,6 +54,22 @@ void Motor::UpdateFeedback(uint8_t data[8]) {
     else if (raw_angle - last_raw_angle < -4096) rounds++;
     last_raw_angle = raw_angle;
     total_angle = ((float)rounds * 360.0f + (float)raw_angle * 360.0f / 8192.0f) / reduction_ratio;
+}
+void Motor::Update(const uint8_t data[8]){
+    int16_t raw_angle = (data[0] << 8) | data[1];
+    current_speed = (float)((int16_t)((data[2] << 8) | data[3]));
+    if (!initialized) {
+        last_raw_angle = raw_angle;
+        initialized = true;
+        return;
+    }
+    delta_raw_angle = raw_angle - last_raw_angle;
+    if (delta_raw_angle > 4096) delta_raw_angle -= 8192;
+    else if (delta_raw_angle < -4096) delta_raw_angle += 8192;
+    total_angle += delta_raw_angle / 8192.0f * 360.0f;
+    total_x = total_angle / 360.0f * 2.3f;//大致cm
+    current = static_cast<int16_t>((data[4] << 8) | data[5]);
+    last_raw_angle = raw_angle;
 }
 
 void Motor::SetTarget(ControlMode_e mode, float val) {
@@ -55,11 +95,11 @@ int16_t Motor::ExecuteControl() {
 
     switch (ctrl_mode) {
         case POSITION_MODE: {
-            float speed_target = pos_controller.Calculate(target_value, total_angle);
+            float speed_target = pos_controller.Calculate(target_position * 3600, total_x * 3600);
 
             if (dir == CLOCKWISE) {
                 if (speed_target < 0) speed_target = 0;
-            } else {
+            } else if (dir == COUNTERCLOCKWISE){
                 if (speed_target > 0) speed_target = 0;
             }
 
@@ -82,6 +122,16 @@ bool Motor::IsTargetReached(float const threshold) {
 
     if (ctrl_mode != POSITION_MODE) return true;
     float error = target_value - total_angle;
+
+    if (error < 0) error = -error;
+
+    return (error < threshold);
+}
+
+bool Motor::IsPositionReached(float const threshold) {
+
+    //if (ctrl_mode != POSITION_MODE) return true;
+    float error = target_position - total_x;
 
     if (error < 0) error = -error;
 
