@@ -12,8 +12,8 @@
 #include "usart.h"
 #include "WFly_ET_08_remote_control.h"
 
-PID s_pid_task(3.0f, 0.0035f, 0.1f, 0.0f, 6000.0f, 1800.0f, 0.7f);
-PID p_pid_task(1.0f, 0.0f, 0.1f, 0.0f, 3000.0f, 1000.0f, 0.0f); // 加上 Kd
+PID s_pid_task(2.0f, 0.002f, 0.15f, 0.0f, 3200.0f, 2000.0f, 0.7f);
+PID p_pid_task(1.0f, 0.0f, 0.1f, 0.0f, 1500.0f, 1500.0f, 0.0f); // 加上 Kd
 
 PID s_pid_always(1.5f, 0.005f, 0.0f, 0.0f, 15000.0f, 10000.0f, 0.5f);
 PID p_pid_always(1.0f, 0.0f, 0.0f, 0.0f, 10000.0f, 0.0f, 0.0f);
@@ -154,7 +154,7 @@ extern "C" {
                     if (!new_motor.init_ready) {
                         new_motor.init();
                         current_m3 = new_motor.ExecuteControl();
-                        current_m3 = 65535 - current_m3;
+                        //current_m3 = 65535 - current_m3;
                         CAN_Send(0, 0, current_m3);
                     } else set_random_position();
                 }
@@ -162,7 +162,13 @@ extern "C" {
                     move_random_position();
                 }
             }
-            if (rm_controller.getsc() != 0 || rm_controller.getsa() != 2 || rm_controller.getsb() != 0 || rm_controller.getsd() != 2) ismoving = false;
+            if (rm_controller.getsc() != 0 || rm_controller.getsa() != 2 || rm_controller.getsb() != 0 || rm_controller.getsd() != 2) {
+                ismoving = false;
+                new_motor.init_ready = false;
+                new_motor.init_x = 0.0f;
+                s_pid_task.Reset();
+                p_pid_task.Reset();
+            }
         }
     }
 

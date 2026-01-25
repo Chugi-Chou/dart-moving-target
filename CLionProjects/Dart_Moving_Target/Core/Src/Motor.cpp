@@ -10,8 +10,8 @@
 
 Motor::Motor(const PID& pos_pid, const PID& speed_pid, MotorType motor_selection, ControlMode_e ctrl_selection)
     : pos_controller(pos_pid), speed_controller(speed_pid), motor_type(motor_selection), ctrl_mode(ctrl_selection),
-      target_value(0), initialized(false), init_ready(false), total_x(0.0f), total_angle(0.0f), last_total_x(0.0f),
-      stuck_time(0), init_speed(1000.0f), stuck_current(5015), max_stuck_time(10) {
+      target_value(0), initialized(false), init_ready(false), init_x(0.0f), total_x(0.0f), total_angle(0.0f), last_total_x(0.0f),
+      stuck_time(0), stuck_current(3190), max_stuck_time(10) {
     dir = CLOCKWISE;
     switch (motor_type) {
         case M2006: reduction_ratio = 36.0f; break;
@@ -28,7 +28,8 @@ void Motor::init() {
     }
 
     if (stuck_time < max_stuck_time) {
-        SetTarget(SPEED_MODE, init_speed);
+        init_x-=0.01;
+        SetPosition(init_x);
         last_total_x = total_x;
     } else {
         SetTarget(SPEED_MODE, 0.0f);
@@ -36,6 +37,7 @@ void Motor::init() {
         total_x = 0;
         last_total_x = 0;
         target_position = 0;
+        init_x = 0;
         init_ready = true;
         stuck_time = 0;
     }

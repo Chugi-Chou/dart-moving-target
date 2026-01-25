@@ -31,6 +31,7 @@ public:
     void init();
     void check();
     bool init_ready;
+    float init_x;
 
 private:
     PID pos_controller;
@@ -45,7 +46,6 @@ private:
     MotorType motor_type;
     float reduction_ratio;
     uint16_t stuck_time;
-    float init_speed;
     const float stuck_current;
     const float max_stuck_time;
 };
