@@ -146,28 +146,30 @@ extern "C" {
     void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         if (htim->Instance == TIM6) {
             //new_App_Task_1ms();
-            if (rm_controller.getsc() == 2 || ismoving && new_motor.IsPositionReached()) {
+            if (rm_controller.getsc() == 2 /*|| ismoving && new_motor.IsPositionReached()*/) {
                 CAN_Send(0,0,0);
-            } else {
-                if (!ismoving && rm_controller.getsc() == 0 && rm_controller.getsa() == 2 &&
-                    rm_controller.getsb() == 0 && rm_controller.getsd() == 2) {
+                new_motor.init_ready = false;
+                new_motor.init_x = 0.0f;
+            } else if (ismoving && new_motor.IsPositionReached()) {CAN_Send(0,0,0);}
+            else if (rm_controller.getsc() != 0 || rm_controller.getsa() != 2 || rm_controller.getsb() != 0 || rm_controller.getsd() != 2) {
+                ismoving = false;
+                //new_motor.init_ready = false;
+                //new_motor.init_x = 0.0f;
+                s_pid_task.Reset();
+                p_pid_task.Reset();
+            }
+            else {
+                if (!ismoving /*&& rm_controller.getsc() == 0 && rm_controller.getsa() == 2 &&
+                    rm_controller.getsb() == 0 && rm_controller.getsd() == 2*/) {
                     if (!new_motor.init_ready) {
                         new_motor.init();
-                        current_m3 = new_motor.ExecuteControl();
-                        //current_m3 = 65535 - current_m3;
+                        current_m3 = new_motor.ExecuteControl();\
                         CAN_Send(0, 0, current_m3);
                     } else set_random_position();
                 }
                 if (ismoving && !new_motor.IsPositionReached()) {
                     move_random_position();
                 }
-            }
-            if (rm_controller.getsc() != 0 || rm_controller.getsa() != 2 || rm_controller.getsb() != 0 || rm_controller.getsd() != 2) {
-                ismoving = false;
-                new_motor.init_ready = false;
-                new_motor.init_x = 0.0f;
-                s_pid_task.Reset();
-                p_pid_task.Reset();
             }
         }
     }
@@ -240,7 +242,7 @@ extern "C" {
     void move_random_position() {
         current_m3 = new_motor.ExecuteControl();
         CAN_Send(0, 0, current_m3);
-        new_motor.init_ready = false;
+        //new_motor.init_ready = false;
     }
 
     void new_App_CAN_Callback(uint32_t std_id, uint8_t* data) {
