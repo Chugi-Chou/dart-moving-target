@@ -14,7 +14,7 @@ enum MotorType {M2006, M3508};
 
 class Motor{
 public:
-    Motor(const PID& pos_pid, const PID& speed_pid, MotorType motor_selection, ControlMode_e mode_selection);
+    Motor(const PID& pos_normal, const PID& speed_normal, const PID& pos_init, const PID& speed_init, MotorType motor_selection, ControlMode_e mode_selection);
     void SetTarget(ControlMode_e mode, float val);
     void SetPosition(int16_t target_pos) {
         target_position = target_pos;
@@ -25,17 +25,23 @@ public:
     int16_t ExecuteControl();
     float GetCurrentAngle() const { return total_angle; }
     bool IsTargetReached(float threshold = 1.0f);
-    bool IsPositionReached(float threshold = 1.0f);
+    bool IsPositionReached(float threshold = 1.5f);
     void ToggleDirection();
     void SetDirection(MotorDirection_e direction);
+    void UseInitPID();
+    void UseNormalPID();
     void init();
     void check();
     bool init_ready;
     float init_x;
 
 private:
-    PID pos_controller;
-    PID speed_controller;
+    PID pos_controller_normal;
+    PID speed_controller_normal;
+    PID pos_controller_init;
+    PID speed_controller_init;
+    PID* current_pos_ctrl;
+    PID* current_speed_ctrl;
     ControlMode_e ctrl_mode;
     MotorDirection_e dir;
     float target_value, target_position;

@@ -34,6 +34,7 @@ public:
     bool isConnected();
     bool process_rc_frame(uint8_t *frame, uint8_t size);
     float getLeftHori() { return left_hori_status;}
+    float getLeftVert() { return left_vert_status;}
     uint8_t getsa() { return ctrl.sa;}
     uint8_t getsb() { return ctrl.sb;}
     uint8_t getsc() { return ctrl.sc;}

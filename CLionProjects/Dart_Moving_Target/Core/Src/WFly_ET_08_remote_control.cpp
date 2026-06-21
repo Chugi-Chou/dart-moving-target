@@ -56,8 +56,8 @@ bool et_08::process_rc_frame(uint8_t *frame, uint8_t size) {
     const int16_t mid_pos = 1024;
 
     right_hori_status = (static_cast<float>(temp_ch[0]) - mid_pos) / range;
-    right_vert_status = (static_cast<float>(temp_ch[1]) - mid_pos) / range;
-    left_vert_status  = (static_cast<float>(temp_ch[2]) - mid_pos) / range;
+    left_vert_status = (static_cast<float>(temp_ch[1]) - mid_pos) / range;
+    right_vert_status  = (static_cast<float>(temp_ch[2]) - mid_pos) / range;
     left_hori_status  = (static_cast<float>(temp_ch[3]) - mid_pos) / range;
     
     auto constrain = [](float &val) {

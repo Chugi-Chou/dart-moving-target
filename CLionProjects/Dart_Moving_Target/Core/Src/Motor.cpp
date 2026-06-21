@@ -8,10 +8,13 @@
 #include "PID.h"
 #include "main.h"
 
-Motor::Motor(const PID& pos_pid, const PID& speed_pid, MotorType motor_selection, ControlMode_e ctrl_selection)
-    : pos_controller(pos_pid), speed_controller(speed_pid), motor_type(motor_selection), ctrl_mode(ctrl_selection),
+Motor::Motor(const PID& pos_normal, const PID& speed_normal, const PID& pos_init, const PID& speed_init, MotorType motor_selection, ControlMode_e ctrl_selection)
+    : pos_controller_normal(pos_normal), speed_controller_normal(speed_normal),
+      pos_controller_init(pos_init), speed_controller_init(speed_init),
+      current_pos_ctrl(&pos_controller_normal), current_speed_ctrl(&speed_controller_normal),
+      motor_type(motor_selection), ctrl_mode(ctrl_selection),
       target_value(0), initialized(false), init_ready(false), init_x(0.0f), total_x(0.0f), total_angle(0.0f), last_total_x(0.0f),
-      stuck_time(0), stuck_current(3190), max_stuck_time(10) {
+      stuck_time(0), stuck_current(4230), max_stuck_time(10) {
     dir = CLOCKWISE;
     switch (motor_type) {
         case M2006: reduction_ratio = 36.0f; break;
@@ -97,7 +100,7 @@ int16_t Motor::ExecuteControl() {
 
     switch (ctrl_mode) {
         case POSITION_MODE: {
-            float speed_target = pos_controller.Calculate(target_position * 3600, total_x * 3600);
+            float speed_target = current_pos_ctrl->Calculate(target_position * 3600, total_x * 3600);
 
             if (dir == CLOCKWISE) {
                 if (speed_target < 0) speed_target = 0;
@@ -105,13 +108,13 @@ int16_t Motor::ExecuteControl() {
                 if (speed_target > 0) speed_target = 0;
             }
 
-            final_current = speed_controller.Calculate(speed_target, current_speed);
+            final_current = current_speed_ctrl->Calculate(speed_target, current_speed);
             break;
         }
         case SPEED_MODE:
             if (dir == CLOCKWISE && target_value < 0) target_value = 0;
             if (dir == COUNTERCLOCKWISE && target_value > 0) target_value = 0;
-            final_current = speed_controller.Calculate(target_value, current_speed);
+            final_current = current_speed_ctrl->Calculate(target_value, current_speed);
             break;
         case CURRENT_MODE:
             final_current = target_value;
@@ -148,4 +151,14 @@ void Motor::ToggleDirection() {
 
 void Motor::SetDirection(MotorDirection_e direction) {
     dir = direction;
+}
+
+void Motor::UseInitPID() {
+    current_pos_ctrl = &pos_controller_init;
+    current_speed_ctrl = &speed_controller_init;
+}
+
+void Motor::UseNormalPID() {
+    current_pos_ctrl = &pos_controller_normal;
+    current_speed_ctrl = &speed_controller_normal;
 }
